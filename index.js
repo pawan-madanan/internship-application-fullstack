@@ -49,8 +49,6 @@ async function handleRequest(request) {
     }),
   }
   cookies = request.headers.get('Cookie') || ""
-  console.log("kaam ho gaya mc")
-  console.log(cookies.includes("variant_type=2"))
   var cookieHasWhichVariant = 3;
   if(cookies.includes("variant_type=1")){
       cookieHasWhichVariant = 1
@@ -68,12 +66,11 @@ async function handleRequest(request) {
   })
 .then(response => {
     if(cookieHasWhichVariant == 1){
-      console.log("ma chudlo1")
+
       f=1
      return fetch(response.variants[0])
      }
      else if(cookieHasWhichVariant == 2){
-       console.log("ma chudlo2")
        f=2
       return fetch(response.variants[1])
       }
