@@ -8,8 +8,10 @@ const custom_title = 'This is custom title'
 const custom_h1_title = "This is custom h1 title"
 const custom_p_desc = "This is custom description"
 const custom_a_url = "Visit my Linkedin Profle"
-//Class
-class AttributeRewriter {
+/*
+This class will rewrite HTML tag contents
+*/
+class CustomHTMLRewriter {
   constructor(attributeName) {
     this.attributeName = attributeName
   }
@@ -31,16 +33,19 @@ class AttributeRewriter {
     }
   }
 }const rewriter = new HTMLRewriter()
-  .on('title', new AttributeRewriter('title'))
-  .on('h1#title', new AttributeRewriter('title'))
-  .on('p#description', new AttributeRewriter('description'))
-  .on('a#url', new AttributeRewriter('url'))
+  .on('title', new CustomHTMLRewriter('title'))
+  .on('h1#title', new CustomHTMLRewriter('title'))
+  .on('p#description', new CustomHTMLRewriter('description'))
+  .on('a#url', new CustomHTMLRewriter('url'))
 
 /**
-* Respond with hello worker text
+* Respond with URL.
+* if a user visits first time, then will land on any of the variant among the 2 varitants.
+* If the user is not a first time visitor then, based the cookie information, will be displayed
+* the same variant.
 * @param {Request} request
 */
-flag = true;
+flagForVariantSwitch = true;
 const url = "https://cfw-takehome.developers.workers.dev/api/variants";
 async function handleRequest(request) {
   let thing =	{
@@ -66,28 +71,27 @@ async function handleRequest(request) {
   })
 .then(response => {
     if(cookieHasWhichVariant == 1){
-
-      f=1
+      temp=1
      return fetch(response.variants[0])
      }
      else if(cookieHasWhichVariant == 2){
-       f=2
+       temp=2
       return fetch(response.variants[1])
       }
       else{
-    if(flag){
-      flag =!flag
-      f = 1;
+    if(flagForVariantSwitch){
+      flagForVariantSwitch =!flagForVariantSwitch
+      temp = 1;
     return fetch(response.variants[0])
   }else {
-    flag =!flag
-      f = 2;
+    flagForVariantSwitch =!flagForVariantSwitch
+      temp = 2;
     return fetch(response.variants[1])
   }
 }
   }).then(response =>{
     esponse = new Response(response.body, response)
-    esponse.headers.set("Set-Cookie", "variant_type=".concat(f))
+    esponse.headers.set("Set-Cookie", "variant_type=".concat(temp))
     return rewriter.transform(esponse)
   })
   .catch(error => {
