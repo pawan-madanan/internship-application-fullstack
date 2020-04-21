@@ -1,3 +1,6 @@
+/*
+Fetch event listener
+*/
 addEventListener('fetch', event => {
 
   event.respondWith(handleRequest(event.request))
@@ -33,11 +36,15 @@ class CustomHTMLRewriter {
     }
   }
 }const rewriter = new HTMLRewriter()
-  .on('title', new CustomHTMLRewriter('title'))
-  .on('h1#title', new CustomHTMLRewriter('title'))
-  .on('p#description', new CustomHTMLRewriter('description'))
-  .on('a#url', new CustomHTMLRewriter('url'))
+.on('title', new CustomHTMLRewriter('title'))
+.on('h1#title', new CustomHTMLRewriter('title'))
+.on('p#description', new CustomHTMLRewriter('description'))
+.on('a#url', new CustomHTMLRewriter('url'))
 
+
+
+flagForVariantSwitch = true;
+const url = "https://cfw-takehome.developers.workers.dev/api/variants";
 /**
 * Respond with URL.
 * if a user visits first time, then will land on any of the variant among the 2 varitants.
@@ -45,8 +52,6 @@ class CustomHTMLRewriter {
 * the same variant.
 * @param {Request} request
 */
-flagForVariantSwitch = true;
-const url = "https://cfw-takehome.developers.workers.dev/api/variants";
 async function handleRequest(request) {
   let thing =	{
     method: 'GET',
@@ -56,41 +61,47 @@ async function handleRequest(request) {
   cookies = request.headers.get('Cookie') || ""
   var cookieHasWhichVariant = 3;
   if(cookies.includes("variant_type=1")){
-      cookieHasWhichVariant = 1
+    cookieHasWhichVariant = 1
   }else if (cookies.includes("variant_type=2")) {
-      cookieHasWhichVariant = 2
+    cookieHasWhichVariant = 2
   }
+  // Call the variants API
   return fetch(url, thing)
   .then(response => {
     if (response.status === 200) {
       return response.json();
     } else {
       return response.text()
-      throw new Error('Something went wrong on api server!');
+      throw new Error('Sorry, There was an Error. Please check again later.');
     }
   })
-.then(response => {
+  .then(response => {
     if(cookieHasWhichVariant == 1){
       temp=1
-     return fetch(response.variants[0])
-     }
-     else if(cookieHasWhichVariant == 2){
-       temp=2
+      // Call the variants API 1
+      return fetch(response.variants[0])
+    }
+    else if(cookieHasWhichVariant == 2){
+      temp=2
+      // Call the variants API  2
       return fetch(response.variants[1])
+    }
+    else{
+      if(flagForVariantSwitch){
+        flagForVariantSwitch =!flagForVariantSwitch
+        temp = 1;
+        // Call the variants API 1
+        return fetch(response.variants[0])
+      }else {
+        flagForVariantSwitch =!flagForVariantSwitch
+        temp = 2;
+        // Call the variants API 2
+        return fetch(response.variants[1])
       }
-      else{
-    if(flagForVariantSwitch){
-      flagForVariantSwitch =!flagForVariantSwitch
-      temp = 1;
-    return fetch(response.variants[0])
-  }else {
-    flagForVariantSwitch =!flagForVariantSwitch
-      temp = 2;
-    return fetch(response.variants[1])
-  }
-}
+    }
   }).then(response =>{
     esponse = new Response(response.body, response)
+    // Set the cookie with variant type that the user visited
     esponse.headers.set("Set-Cookie", "variant_type=".concat(temp))
     return rewriter.transform(esponse)
   })
